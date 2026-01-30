@@ -1,0 +1,76 @@
+name: Deploy with AWS Secrets
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  deploy:
+    name: Deploy to AWS
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (via OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Retrieve secrets from AWS Secrets Manager
+        run: |
+          # Example: Retrieve database password
+          DB_PASSWORD=$(aws secretsmanager get-secret-value \
+            --secret-id ai-med-agent/db/password \
+            --query SecretString \
+            --output text)
+          echo "::add-mask::$DB_PASSWORD"
+          echo "DB_PASSWORD=$DB_PASSWORD" >> $GITHUB_ENV
+
+          # Example: Retrieve API key
+          API_KEY=$(aws secretsmanager get-secret-value \
+            --secret-id ai-med-agent/api/key \
+            --query SecretString \
+            --output text)
+          echo "::add-mask::$API_KEY"
+          echo "API_KEY=$API_KEY" >> $GITHUB_ENV
+
+      - name: Use GitHub Secrets (examples)
+        run: |
+          echo "Using GitHub Secrets..."
+          # Secrets are injected as environment variables
+          # ${{ secrets.GITHUB_SECRET_NAME }} is securely masked in logs
+
+      - name: Deploy application
+        env:
+          # GitHub Secrets are injected here
+          DEPLOYMENT_TOKEN: ${{ secrets.DEPLOYMENT_TOKEN }}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          echo "Deploying application..."
+          # Your deployment script here
+          # Secrets are automatically masked in logs
+
+      - name: Notify deployment status
+        if: always()
+        run: |
+          STATUS=${{ job.status }}
+          echo "Deployment status: $STATUS"
+          # Use SLACK_WEBHOOK to send notifications (optional)
+
+      - name: Upload artifacts
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-logs
+          path: logs/
