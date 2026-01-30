@@ -2,6 +2,28 @@
 
 An AI Medical Agent is an intelligent healthcare assistant that uses artificial intelligence to help with medical tasks, patient care, and healthcare operations. It's built using AWS services to be secure, compliant, and scalable.
 
+## 🚀 AICloud-Innovation Enterprise Framework
+
+**NEW:** This repository now includes the **AICloud-Innovation Enterprise Framework** - a powerful infrastructure for developing sophisticated AI Agentic Agents at enterprise scale.
+
+### Quick Start with the Framework
+
+```bash
+# Run the enterprise framework demo
+python examples/enterprise_framework_demo.py
+```
+
+**Features:**
+- 🤖 **Multi-Agent System**: Coordinate multiple specialized AI agents
+- 🏥 **Healthcare Agents**: Diagnosis, Treatment Planning, Patient Monitoring, Clinical Research
+- 📊 **Enterprise Monitoring**: Real-time health checks and performance metrics
+- 🔄 **Workflow Orchestration**: Sequential, parallel, and conditional agent workflows
+- ☁️ **Cloud-Native**: Built for AWS with Organizations integration
+
+**[📖 Complete Framework Documentation →](AICLOUD_INNOVATION_FRAMEWORK.md)**
+
+---
+
 ## AWS Organizations & Governance
 
 This project uses AWS Organizations for multi-account governance with:
