@@ -16,6 +16,7 @@ An **autonomous AI-driven agent** for managing AWS Organizations at scale. Featu
 
 - **[Production Transformation Summary](PRODUCTION_TRANSFORMATION_SUMMARY.md)** - Complete implementation overview
 - **[Agent Architecture](docs/AGENT_ARCHITECTURE.md)** - Technical architecture and usage
+- **[AppConfig Reference](docs/APPCONFIG_REFERENCE.md)** - Centralized configuration management via [Appconfig repository](https://github.com/AI-Empower-Cloud-Hub-LLC/Appconfig)
 - **[Getting Started](docs/setup/SETUP_SUMMARY.md)** - Quick setup guide
 - **[All Documentation](docs/INDEX.md)** - Complete documentation index
 - **[Organizations Guide](docs/organizations/SETUP.md)** - AWS Organizations setup
