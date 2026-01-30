@@ -2,6 +2,7 @@
 
 An AI Medical Agent is an intelligent healthcare assistant that uses artificial intelligence to help with medical tasks, patient care, and healthcare operations. It's built using AWS services to be secure, compliant, and scalable.
 
+Documentation index: docs/INDEX.md
 ## AWS Organizations & Governance
 
 This project uses AWS Organizations for multi-account governance with:
@@ -11,23 +12,23 @@ This project uses AWS Organizations for multi-account governance with:
 - **CloudTrail**: Organization-wide audit logging
 - **AWS Config**: Compliance tracking and enforcement
 
-**See [ORGANIZATIONS_SETUP.md](ORGANIZATIONS_SETUP.md) for complete details.**
+**See [docs/organizations/SETUP.md](docs/organizations/SETUP.md) for complete details.**
 
 ### Quick Reference
 ```
-Organization ID: o-lz5ryybhfh
-Master Account: 996099991638
+Organization ID: <ORG_ID>
+Master Account: <ACCOUNT_ID>
 
 OUs:
-- Production (ou-b0ab-bj6zyii3)
-- Staging (ou-b0ab-ky6kdwql)
-- Development (ou-b0ab-7t9356e2)
-- Security (ou-b0ab-qb48c366)
+- Production (<OU_ID>)
+- Staging (<OU_ID>)
+- Development (<OU_ID>)
+- Security (<OU_ID>)
 
 SCPs:
-- ProductionEnvironmentPolicy (p-fnajp74q)
-- StagingEnvironmentPolicy (p-5baz2zrv)
-- DevelopmentEnvironmentPolicy (p-1vhhyht3)
+- ProductionEnvironmentPolicy (<SCP_ID>)
+- StagingEnvironmentPolicy (<SCP_ID>)
+- DevelopmentEnvironmentPolicy (<SCP_ID>)
 ```
 
 **Python Management:**
@@ -129,7 +130,7 @@ Non-sensitive configurations are managed via AWS AppConfig (created by CloudForm
 ### Installation
 ```bash
 # Clone repo
-git clone https://github.com/AI-Empower-360/AI-Med-Agent.git
+git clone https://github.com/AI-Empower-Cloud-Hub-LLC/AI-Med-Agent.git
 cd AI-Med-Agent
 
 # Install git-secrets hooks (if not auto-installed)
@@ -140,11 +141,8 @@ git secrets --register-aws
 cp .env.example .env
 # Edit .env with your local values
 
-# Install dependencies (Python example)
+# Install dependencies
 pip install -r requirements.txt
-
-# Or (Node.js example)
-npm install
 ```
 
 ### AWS Integration
@@ -164,13 +162,7 @@ aws appconfig get-latest-configuration \
 ```
 
 ### Running Locally
-```bash
-# Start application
-python app.py
-
-# Or with Node.js
-npm start
-```
+This repository provides governance automation and utilities. There is no runtime app entrypoint included.
 
 ### CI/CD Pipeline
 GitHub Actions workflows are triggered on:

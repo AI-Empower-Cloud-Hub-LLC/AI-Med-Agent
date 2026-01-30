@@ -4,8 +4,7 @@ Description: 'AWS Organizations Setup - OUs, SCPs, and Governance Structure'
 Parameters:
   RootId:
     Type: String
-    Default: r-b0ab
-    Description: Root Organizational Unit ID
+    Description: Root Organizational Unit ID (required)
 
 Resources:
   # ============================================================================
