@@ -1,6 +1,47 @@
 # AI-Med-Agent
 
-An AI Medical Agent is an intelligent healthcare assistant that uses artificial intelligence to help with medical tasks, patient care, and healthcare operations. It's built using AWS services to be secure, compliant, and scalable.
+An enterprise-level AI Medical Agent framework featuring intelligent healthcare assistants that use artificial intelligence to help with medical tasks, patient care, and healthcare operations. Built with AWS integration for security, compliance, and scalability.
+
+## 🚀 Enterprise AI Agent Framework
+
+AI-Med-Agent now includes a comprehensive **enterprise-level multi-agent framework** with:
+
+- **🤖 Specialized Medical AI Agents**: Diagnosis, Triage, and Patient Monitoring agents
+- **🔄 Agent Orchestration System**: Coordinate multiple agents for complex workflows
+- **🧠 Memory & State Management**: Episodic, semantic, procedural, and working memory
+- **📊 Monitoring & Observability**: Comprehensive metrics and structured logging
+- **⚙️ Enterprise Configuration**: Multi-source config management (YAML, env vars, AWS AppConfig)
+- **🔐 AWS Integration**: Seamless integration with Secrets Manager, AppConfig, and CloudWatch
+
+### Quick Start with AI Agents
+
+```python
+from agents.orchestration.orchestrator import AgentOrchestrator
+from agents.medical import DiagnosisAgent, TriageAgent, PatientMonitoringAgent
+
+# Create orchestrator and agents
+orchestrator = AgentOrchestrator()
+
+diagnosis_agent = DiagnosisAgent(config)
+triage_agent = TriageAgent(config)
+monitoring_agent = PatientMonitoringAgent(config)
+
+# Register and start agents
+orchestrator.register_agent(diagnosis_agent)
+orchestrator.register_agent(triage_agent)
+orchestrator.register_agent(monitoring_agent)
+orchestrator.start_all()
+
+# Process patient requests
+orchestrator.process_messages()
+```
+
+**📚 Full Documentation:**
+- [Enterprise Architecture](docs/agents/ARCHITECTURE.md)
+- [Framework Guide](docs/agents/FRAMEWORK_GUIDE.md)
+- [Run Demo](examples/agents/demo.py)
+
+---
 
 ## AWS Organizations & Governance
 
