@@ -3,7 +3,7 @@ Triage Agent
 Specialized agent for patient triage and priority assessment
 """
 
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from enum import Enum
 from agents.base.agent import BaseAgent, AgentConfig
 from agents.base.protocol import AgentMessage
@@ -206,7 +206,7 @@ class TriageAgent(BaseAgent):
         
         return "; ".join(reasons)
     
-    def _get_recommended_actions(self, priority: TriagePriority) -> list[str]:
+    def _get_recommended_actions(self, priority: TriagePriority) -> List[str]:
         """Get recommended actions based on priority"""
         if priority == TriagePriority.EMERGENCY:
             return [

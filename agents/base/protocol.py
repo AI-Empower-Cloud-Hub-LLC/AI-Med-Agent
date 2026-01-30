@@ -5,7 +5,7 @@ Defines message formats and communication standards for inter-agent communicatio
 
 from enum import Enum
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 from datetime import datetime
 import uuid
 
@@ -86,7 +86,7 @@ class AgentProtocol:
         self.message_queue[receiver_id].append(message)
         return True
     
-    def receive_messages(self, agent_id: str) -> list[AgentMessage]:
+    def receive_messages(self, agent_id: str) -> List[AgentMessage]:
         """
         Receive all pending messages for an agent
         

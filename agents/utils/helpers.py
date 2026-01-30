@@ -4,7 +4,7 @@ Common utility functions for agents
 """
 
 import uuid
-from typing import Any, Dict
+from typing import Any, Dict, List
 from datetime import datetime
 
 
@@ -27,7 +27,7 @@ class AgentHelper:
         return datetime.utcnow().isoformat()
     
     @staticmethod
-    def validate_config(config: Dict[str, Any], required_fields: list[str]) -> bool:
+    def validate_config(config: Dict[str, Any], required_fields: List[str]) -> bool:
         """
         Validate that a config has required fields
         
