@@ -1,0 +1,8 @@
+"""Bandit security configuration"""
+
+exclude_dirs:
+  - /tests/
+  - /venv/
+  - /.venv/
+
+skips: [B101]  # Skip assert_used in tests

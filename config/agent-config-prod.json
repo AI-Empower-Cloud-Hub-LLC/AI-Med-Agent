@@ -1,0 +1,28 @@
+"""Production environment AppConfig"""
+
+{
+  "agent": {
+    "log_level": "WARNING",
+    "max_retries": 5,
+    "require_approval": true,
+    "governance_check_interval_minutes": 15,
+    "report_generation_enabled": true,
+    "auto_remediation_enabled": false
+  },
+  "aws": {
+    "region": "us-east-1",
+    "organizations_endpoint": "https://organizations.amazonaws.com",
+    "appconfig_endpoint": "https://appconfig.us-east-1.amazonaws.com"
+  },
+  "features": {
+    "autonomous_governance": true,
+    "state_persistence": true,
+    "decision_logging": true,
+    "auto_scaling": true
+  },
+  "monitoring": {
+    "cloudwatch_enabled": true,
+    "custom_metrics_enabled": true,
+    "log_retention_days": 90
+  }
+}

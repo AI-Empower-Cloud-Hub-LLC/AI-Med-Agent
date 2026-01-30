@@ -1,0 +1,226 @@
+"""
+AppConfig Deployment Infrastructure
+
+Deploys AI-Med-Agent configuration to AWS AppConfig with multi-environment support
+"""
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AppConfig Infrastructure for AI-Med-Agent Autonomous Agent'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, staging, prod]
+    Description: Deployment environment
+
+  AgentVersion:
+    Type: String
+    Default: '1.0.0'
+    Description: Agent version being deployed
+
+Resources:
+  # ============================================================================
+  # AppConfig Application
+  # ============================================================================
+
+  AIAgentApplication:
+    Type: AWS::AppConfig::Application
+    Properties:
+      Name: ai-med-agent-app
+      Description: AI-Med-Agent Autonomous Organizations Manager
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Component
+          Value: agent
+
+  # ============================================================================
+  # Environments
+  # ============================================================================
+
+  DevEnvironment:
+    Type: AWS::AppConfig::Environment
+    Condition: IsDevEnvironment
+    Properties:
+      ApplicationId: !Ref AIAgentApplication
+      Name: agent-dev
+      Description: Development environment for AI-Med-Agent
+      Monitors:
+        - AlarmArn: !GetAtt AgentConfigAlarm.AlarmArn
+          AlarmRoleArn: !GetAtt AppConfigRoleArn.Arn
+
+  StagingEnvironment:
+    Type: AWS::AppConfig::Environment
+    Condition: IsStagingEnvironment
+    Properties:
+      ApplicationId: !Ref AIAgentApplication
+      Name: agent-staging
+      Description: Staging environment for AI-Med-Agent
+      Monitors:
+        - AlarmArn: !GetAtt AgentConfigAlarm.AlarmArn
+          AlarmRoleArn: !GetAtt AppConfigRoleArn.Arn
+
+  ProdEnvironment:
+    Type: AWS::AppConfig::Environment
+    Condition: IsProdEnvironment
+    Properties:
+      ApplicationId: !Ref AIAgentApplication
+      Name: agent-prod
+      Description: Production environment for AI-Med-Agent
+      Monitors:
+        - AlarmArn: !GetAtt AgentConfigAlarm.AlarmArn
+          AlarmRoleArn: !GetAtt AppConfigRoleArn.Arn
+
+  # ============================================================================
+  # Configuration Profiles
+  # ============================================================================
+
+  AgentConfigProfile:
+    Type: AWS::AppConfig::ConfigurationProfile
+    Properties:
+      ApplicationId: !Ref AIAgentApplication
+      Name: agent-config
+      Description: Agent configuration
+      LocationUri: !Sub 's3://${ConfigBucket}/agent-config.json'
+      Type: AWS.AppConfig.FeatureFlags
+      Validators:
+        - Type: JSON_SCHEMA
+          Content: !Sub |
+            {
+              "type": "object",
+              "properties": {
+                "agent": {
+                  "type": "object",
+                  "properties": {
+                    "log_level": {"type": "string"},
+                    "max_retries": {"type": "integer"},
+                    "require_approval": {"type": "boolean"}
+                  }
+                }
+              }
+            }
+
+  FeatureFlagsProfile:
+    Type: AWS::AppConfig::ConfigurationProfile
+    Properties:
+      ApplicationId: !Ref AIAgentApplication
+      Name: feature-flags
+      Description: Feature flags for agent
+      LocationUri: !Sub 's3://${ConfigBucket}/feature-flags.json'
+      Type: AWS.AppConfig.FeatureFlags
+
+  # ============================================================================
+  # Deployment Strategies
+  # ============================================================================
+
+  LinearDeploymentStrategy:
+    Type: AWS::AppConfig::DeploymentStrategy
+    Properties:
+      Name: ai-agent-linear
+      Description: Linear deployment for AI-Med-Agent configs (10% every 30 seconds)
+      DeploymentDurationInMinutes: 5
+      FinalBakeTimeInMinutes: 5
+      GrowthFactor: 10
+      GrowthType: Linear
+      ReplicateTo: NONE
+
+  CanaryDeploymentStrategy:
+    Type: AWS::AppConfig::DeploymentStrategy
+    Properties:
+      Name: ai-agent-canary
+      Description: Canary deployment for AI-Med-Agent (20% for 5 min, then 100%)
+      DeploymentDurationInMinutes: 10
+      FinalBakeTimeInMinutes: 5
+      GrowthFactor: 80
+      GrowthType: Exponential
+      ReplicateTo: NONE
+
+  # ============================================================================
+  # Storage & IAM
+  # ============================================================================
+
+  ConfigBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'ai-med-agent-config-${AWS::AccountId}-${Environment}'
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+
+  AppConfigRoleArn:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: appconfig.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ============================================================================
+  # Monitoring
+  # ============================================================================
+
+  AgentConfigAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub 'ai-med-agent-config-error-${Environment}'
+      AlarmDescription: Alert on AI-Med-Agent configuration deployment errors
+      MetricName: DeploymentErrors
+      Namespace: AWS/AppConfig
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+        - Name: Application
+          Value: !Ref AIAgentApplication
+
+  # ============================================================================
+  # Conditions
+  # ============================================================================
+
+Conditions:
+  IsDevEnvironment: !Equals [!Ref Environment, 'dev']
+  IsStagingEnvironment: !Equals [!Ref Environment, 'staging']
+  IsProdEnvironment: !Equals [!Ref Environment, 'prod']
+
+Outputs:
+  ApplicationId:
+    Description: AppConfig Application ID
+    Value: !Ref AIAgentApplication
+    Export:
+      Name: !Sub '${AWS::StackName}-ApplicationId'
+
+  ConfigBucketName:
+    Description: S3 bucket for configurations
+    Value: !Ref ConfigBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-ConfigBucket'
+
+  EnvironmentName:
+    Description: AppConfig Environment name
+    Value: !If
+      - IsDevEnvironment
+      - !Ref DevEnvironment
+      - !If
+        - IsStagingEnvironment
+        - !Ref StagingEnvironment
+        - !Ref ProdEnvironment
+    Export:
+      Name: !Sub '${AWS::StackName}-EnvironmentName'

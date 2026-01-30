@@ -1,0 +1,31 @@
+"""Feature flags configuration"""
+
+{
+  "flags": {
+    "auto_governance_enabled": {
+      "name": "Autonomous Governance",
+      "description": "Enable autonomous governance checks",
+      "enabled": true
+    },
+    "detailed_logging": {
+      "name": "Detailed Logging",
+      "description": "Enable detailed operation logging",
+      "enabled": true
+    },
+    "cost_optimization": {
+      "name": "Cost Optimization",
+      "description": "Enable cost optimization recommendations",
+      "enabled": false
+    },
+    "security_hardening": {
+      "name": "Security Hardening",
+      "description": "Enable automatic security policy enforcement",
+      "enabled": true
+    },
+    "canary_deployments": {
+      "name": "Canary Deployments",
+      "description": "Use canary strategy for config deployments",
+      "enabled": true
+    }
+  }
+}

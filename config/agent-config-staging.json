@@ -1,0 +1,28 @@
+"""Staging environment AppConfig"""
+
+{
+  "agent": {
+    "log_level": "INFO",
+    "max_retries": 4,
+    "require_approval": true,
+    "governance_check_interval_minutes": 30,
+    "report_generation_enabled": true,
+    "auto_remediation_enabled": false
+  },
+  "aws": {
+    "region": "us-east-1",
+    "organizations_endpoint": "https://organizations.amazonaws.com",
+    "appconfig_endpoint": "https://appconfig.us-east-1.amazonaws.com"
+  },
+  "features": {
+    "autonomous_governance": true,
+    "state_persistence": true,
+    "decision_logging": true,
+    "auto_scaling": false
+  },
+  "monitoring": {
+    "cloudwatch_enabled": true,
+    "custom_metrics_enabled": true,
+    "log_retention_days": 30
+  }
+}
