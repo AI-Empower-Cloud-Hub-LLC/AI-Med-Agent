@@ -2,6 +2,44 @@
 
 An AI Medical Agent is an intelligent healthcare assistant that uses artificial intelligence to help with medical tasks, patient care, and healthcare operations. It's built using AWS services to be secure, compliant, and scalable.
 
+## AWS Organizations & Governance
+
+This project uses AWS Organizations for multi-account governance with:
+
+- **4 Organizational Units (OUs)**: Production, Staging, Development, Security
+- **3 Service Control Policies (SCPs)**: Environment-specific security guardrails
+- **CloudTrail**: Organization-wide audit logging
+- **AWS Config**: Compliance tracking and enforcement
+
+**See [ORGANIZATIONS_SETUP.md](ORGANIZATIONS_SETUP.md) for complete details.**
+
+### Quick Reference
+```
+Organization ID: o-lz5ryybhfh
+Master Account: 996099991638
+
+OUs:
+- Production (ou-b0ab-bj6zyii3)
+- Staging (ou-b0ab-ky6kdwql)
+- Development (ou-b0ab-7t9356e2)
+- Security (ou-b0ab-qb48c366)
+
+SCPs:
+- ProductionEnvironmentPolicy (p-fnajp74q)
+- StagingEnvironmentPolicy (p-5baz2zrv)
+- DevelopmentEnvironmentPolicy (p-1vhhyht3)
+```
+
+**Python Management:**
+```python
+from aws_organizations import AWSOrganizationsManager
+
+manager = AWSOrganizationsManager()
+report = manager.generate_organization_report()
+```
+
+---
+
 ## Security & Secrets Management
 
 This project uses multiple layers of secret management to protect sensitive data:
