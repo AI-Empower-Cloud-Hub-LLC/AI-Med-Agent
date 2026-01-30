@@ -1,0 +1,87 @@
+"""
+Enterprise Agent Configuration
+Configuration templates and management for the AI agent framework
+"""
+
+agents:
+  # Default agent configuration
+  defaults:
+    max_retries: 3
+    timeout_seconds: 30
+    enable_logging: true
+    log_level: INFO
+    
+  # Diagnosis Agent Configuration
+  diagnosis:
+    agent_type: diagnosis
+    agent_name: DiagnosisAgent
+    max_retries: 5
+    timeout_seconds: 60
+    enable_logging: true
+    log_level: DEBUG
+    metadata:
+      version: "1.0.0"
+      capabilities:
+        - symptom_analysis
+        - diagnosis_suggestion
+        - medical_knowledge
+      
+  # Triage Agent Configuration
+  triage:
+    agent_type: triage
+    agent_name: TriageAgent
+    max_retries: 3
+    timeout_seconds: 30
+    enable_logging: true
+    log_level: INFO
+    metadata:
+      version: "1.0.0"
+      capabilities:
+        - priority_assessment
+        - vital_signs_analysis
+        - emergency_detection
+      
+  # Patient Monitoring Agent Configuration
+  monitoring:
+    agent_type: monitoring
+    agent_name: PatientMonitoringAgent
+    max_retries: 3
+    timeout_seconds: 45
+    enable_logging: true
+    log_level: INFO
+    metadata:
+      version: "1.0.0"
+      capabilities:
+        - continuous_monitoring
+        - anomaly_detection
+        - trend_analysis
+
+# Orchestrator Configuration
+orchestrator:
+  max_agents: 100
+  message_queue_size: 1000
+  heartbeat_interval: 60
+  health_check_interval: 300
+
+# Memory Configuration
+memory:
+  working_memory_ttl_hours: 1
+  max_memories_per_agent: 1000
+  importance_threshold: 0.5
+
+# Monitoring Configuration
+monitoring:
+  enable_metrics: true
+  metrics_export_interval: 3600
+  log_retention_days: 30
+
+# AWS Integration
+aws:
+  region: us-east-1
+  secrets_manager:
+    enabled: true
+    secret_prefix: ai-med-agent
+  appconfig:
+    enabled: true
+    application_id: ie50sgm
+    environment: agents-dev
