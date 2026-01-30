@@ -12,6 +12,10 @@ from collections import defaultdict
 
 from ..agents.base_agent import BaseAgent, AgentStatus
 
+# Health check thresholds
+FAILURE_RATE_THRESHOLD = 0.3  # 30% failure rate triggers degraded status
+INACTIVITY_THRESHOLD_HOURS = 1  # Hours of inactivity before agent marked inactive
+
 
 class MetricsCollector:
     """
@@ -187,13 +191,13 @@ class AgentObserver:
         total_tasks = agent.tasks_completed + agent.tasks_failed
         if total_tasks > 0:
             failure_rate = agent.tasks_failed / total_tasks
-            if failure_rate > 0.3:  # More than 30% failure rate
+            if failure_rate > FAILURE_RATE_THRESHOLD:
                 health["status"] = "degraded"
                 health["issues"].append(f"High failure rate: {failure_rate:.2%}")
         
         # Check if agent is inactive
         time_since_active = datetime.now() - agent.last_active
-        if time_since_active > timedelta(hours=1):
+        if time_since_active > timedelta(hours=INACTIVITY_THRESHOLD_HOURS):
             health["status"] = "inactive"
             health["issues"].append(f"No activity for {time_since_active}")
         

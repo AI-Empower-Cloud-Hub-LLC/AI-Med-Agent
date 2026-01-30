@@ -7,7 +7,10 @@ to develop powerful AI agentic agents.
 """
 
 import sys
-sys.path.insert(0, '/home/runner/work/AI-Med-Agent/AI-Med-Agent')
+import os
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from aicloud_innovation import (
     BaseAgent,
@@ -50,7 +53,7 @@ def main():
     registry.register_agent_type("patient_monitoring", PatientMonitoringAgent)
     registry.register_agent_type("clinical_research", ClinicalResearchAgent)
     
-    print(f"✓ Registered {len(registry._agent_types)} agent types")
+    print(f"✓ Registered {registry.get_registered_types_count()} agent types")
     print()
     
     # Step 2: Create Specialized Agents

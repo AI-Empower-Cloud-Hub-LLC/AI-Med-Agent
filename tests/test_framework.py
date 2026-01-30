@@ -6,7 +6,10 @@ Tests the complete enterprise framework functionality.
 """
 
 import sys
-sys.path.insert(0, '/home/runner/work/AI-Med-Agent/AI-Med-Agent')
+import os
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import unittest
 from aicloud_innovation import (
@@ -33,7 +36,7 @@ class TestAgentRegistry(unittest.TestCase):
     
     def test_register_agent_type(self):
         """Test registering a new agent type"""
-        self.assertIn("medical_diagnosis", self.registry._agent_types)
+        self.assertEqual(self.registry.get_registered_types_count(), 1)
     
     def test_create_agent(self):
         """Test creating an agent instance"""

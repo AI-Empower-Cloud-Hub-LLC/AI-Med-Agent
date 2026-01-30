@@ -140,6 +140,15 @@ class AgentRegistry:
         """
         return [agent.get_status() for agent in self._agents.values()]
     
+    def get_registered_types_count(self) -> int:
+        """
+        Get the count of registered agent types.
+        
+        Returns:
+            Number of registered agent types
+        """
+        return len(self._agent_types)
+    
     def get_statistics(self) -> Dict:
         """
         Get overall registry statistics.
@@ -158,16 +167,16 @@ class AgentRegistry:
             total_tasks_completed += agent.tasks_completed
             total_tasks_failed += agent.tasks_failed
         
+        total_tasks = total_tasks_completed + total_tasks_failed
+        success_rate = (total_tasks_completed / total_tasks) if total_tasks > 0 else 0
+        
         return {
             "total_agents": total_agents,
             "agents_by_status": agents_by_status,
             "registered_types": list(self._agent_types.keys()),
             "total_tasks_completed": total_tasks_completed,
             "total_tasks_failed": total_tasks_failed,
-            "success_rate": (
-                total_tasks_completed / (total_tasks_completed + total_tasks_failed)
-                if (total_tasks_completed + total_tasks_failed) > 0 else 0
-            )
+            "success_rate": success_rate
         }
     
     def shutdown_all(self):

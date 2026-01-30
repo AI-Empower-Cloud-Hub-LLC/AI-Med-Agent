@@ -14,6 +14,9 @@ import uuid
 from datetime import datetime
 import logging
 
+# Constants
+MAX_MEMORY_SIZE = 100  # Maximum number of items to keep in agent memory
+
 
 class AgentStatus(Enum):
     """Agent operational status"""
@@ -179,8 +182,8 @@ class BaseAgent(ABC):
         })
         
         # Keep memory size manageable
-        if len(self.memory) > 100:
-            self.memory = self.memory[-100:]
+        if len(self.memory) > MAX_MEMORY_SIZE:
+            self.memory = self.memory[-MAX_MEMORY_SIZE:]
     
     def get_status(self) -> Dict[str, Any]:
         """Get current agent status and statistics"""
