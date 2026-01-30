@@ -1,0 +1,357 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AWS Organizations Setup - OUs, SCPs, and Governance Structure'
+
+Parameters:
+  RootId:
+    Type: String
+    Default: r-b0ab
+    Description: Root Organizational Unit ID
+
+Resources:
+  # ============================================================================
+  # Organizational Units (OUs)
+  # ============================================================================
+  
+  ProductionOU:
+    Type: AWS::Organizations::OrganizationalUnit
+    Properties:
+      Name: Production
+      ParentId: !Ref RootId
+      Tags:
+        - Key: Environment
+          Value: production
+        - Key: Criticality
+          Value: high
+
+  StagingOU:
+    Type: AWS::Organizations::OrganizationalUnit
+    Properties:
+      Name: Staging
+      ParentId: !Ref RootId
+      Tags:
+        - Key: Environment
+          Value: staging
+        - Key: Criticality
+          Value: medium
+
+  DevelopmentOU:
+    Type: AWS::Organizations::OrganizationalUnit
+    Properties:
+      Name: Development
+      ParentId: !Ref RootId
+      Tags:
+        - Key: Environment
+          Value: development
+        - Key: Criticality
+          Value: low
+
+  SecurityOU:
+    Type: AWS::Organizations::OrganizationalUnit
+    Properties:
+      Name: Security
+      ParentId: !Ref RootId
+      Tags:
+        - Key: Environment
+          Value: security
+        - Key: Criticality
+          Value: critical
+
+  # ============================================================================
+  # Service Control Policies (SCPs)
+  # ============================================================================
+
+  ProductionSCP:
+    Type: AWS::Organizations::Policy
+    Properties:
+      Name: ProductionEnvironmentPolicy
+      Description: SCP for production environment - strict security controls
+      Type: SERVICE_CONTROL_POLICY
+      Content:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: DenyRootAccountUsage
+            Effect: Deny
+            Action:
+              - iam:CreateAccessKey
+              - iam:CreateLoginProfile
+              - iam:CreateVirtualMFADevice
+            Resource: arn:aws:iam::*:root
+          - Sid: PreventDangerousActions
+            Effect: Deny
+            Action:
+              - ec2:TerminateInstances
+              - rds:DeleteDBInstance
+              - s3:DeleteBucket
+              - kms:DisableKey
+            Resource: '*'
+            Condition:
+              StringNotLike:
+                'aws:username': 
+                  - 'admin'
+                  - 'backup-*'
+
+  StagingSCP:
+    Type: AWS::Organizations::Policy
+    Properties:
+      Name: StagingEnvironmentPolicy
+      Description: SCP for staging environment - balanced restrictions
+      Type: SERVICE_CONTROL_POLICY
+      Content:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowCommonServices
+            Effect: Allow
+            Action:
+              - ec2:*
+              - rds:*
+              - s3:*
+              - lambda:*
+              - dynamodb:*
+              - cloudformation:*
+              - logs:*
+            Resource: '*'
+          - Sid: DenyHighCostServices
+            Effect: Deny
+            Action:
+              - sagemaker:*
+              - appstream:*
+              - workspaces:*
+            Resource: '*'
+
+  DevelopmentSCP:
+    Type: AWS::Organizations::Policy
+    Properties:
+      Name: DevelopmentEnvironmentPolicy
+      Description: SCP for development environment - permissive access
+      Type: SERVICE_CONTROL_POLICY
+      Content:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowDevelopmentServices
+            Effect: Allow
+            Action:
+              - '*'
+            Resource: '*'
+          - Sid: DenyOrganizationChanges
+            Effect: Deny
+            Action:
+              - organizations:*
+              - account:CloseAccount
+            Resource: '*'
+
+  SecuritySCP:
+    Type: AWS::Organizations::Policy
+    Properties:
+      Name: SecurityEnvironmentPolicy
+      Description: SCP for security account - strict compliance
+      Type: SERVICE_CONTROL_POLICY
+      Content:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: RequireEncryptionInTransit
+            Effect: Deny
+            Action: '*'
+            Resource: '*'
+            Condition:
+              Bool:
+                'aws:SecureTransport': 'false'
+          - Sid: EnforceImdsV2
+            Effect: Deny
+            Action: ec2:RunInstances
+            Resource: arn:aws:ec2:*:*:instance/*
+            Condition:
+              StringNotEquals:
+                'ec2:MetadataHttpTokens': required
+          - Sid: DenyUnencryptedUploads
+            Effect: Deny
+            Action: s3:PutObject
+            Resource: '*'
+            Condition:
+              StringNotEquals:
+                's3:x-amz-server-side-encryption': 'AES256'
+
+  # ============================================================================
+  # S3 Buckets for Logging
+  # ============================================================================
+
+  CloudTrailBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: !Sub 'ai-med-cloudtrail-${AWS::AccountId}'
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+  CloudTrailBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref CloudTrailBucket
+      PolicyText:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowCloudTrail
+            Effect: Allow
+            Principal:
+              Service: cloudtrail.amazonaws.com
+            Action: 
+              - s3:GetBucketAcl
+              - s3:PutObject
+            Resource:
+              - !GetAtt CloudTrailBucket.Arn
+              - !Sub '${CloudTrailBucket.Arn}/*'
+
+  ConfigBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: !Sub 'ai-med-config-${AWS::AccountId}'
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+  # ============================================================================
+  # CloudTrail
+  # ============================================================================
+
+  OrganizationTrail:
+    Type: AWS::CloudTrail::Trail
+    DependsOn: CloudTrailBucketPolicy
+    Properties:
+      S3BucketName: !Ref CloudTrailBucket
+      IsLogging: true
+      IsMultiRegionTrail: true
+      IncludeGlobalServiceEvents: true
+      TrailName: ai-med-organization-trail
+      EnableLogFileValidation: true
+
+  # ============================================================================
+  # IAM Role for AWS Config
+  # ============================================================================
+
+  ConfigRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: config.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/ConfigRole
+      Policies:
+        - PolicyName: ConfigS3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetBucketVersioning
+                Resource:
+                  - !GetAtt ConfigBucket.Arn
+                  - !Sub '${ConfigBucket.Arn}/*'
+
+  # ============================================================================
+  # AWS Config Recorder
+  # ============================================================================
+
+  ConfigRecorder:
+    Type: AWS::Config::ConfigurationRecorder
+    Properties:
+      RoleArn: !GetAtt ConfigRole.Arn
+      RecordingGroup:
+        AllSupported: true
+        IncludeGlobalResources: true
+
+  ConfigDeliveryChannel:
+    Type: AWS::Config::DeliveryChannel
+    DependsOn: ConfigRecorder
+    Properties:
+      S3BucketName: !Ref ConfigBucket
+      ConfigSnapshotDeliveryProperties:
+        DeliveryFrequency: Six_Hours
+
+  # ============================================================================
+  # Config Rules
+  # ============================================================================
+
+  RequiredTagsRule:
+    Type: AWS::Config::ConfigRule
+    DependsOn: ConfigDeliveryChannel
+    Properties:
+      ConfigRuleName: required-tags-rule
+      Description: Checks if resources have required tags
+      Source:
+        Owner: AWS
+        SourceIdentifier: REQUIRED_TAGS
+      InputParameters: |
+        {
+          "tag1Key": "Environment",
+          "tag2Key": "Owner"
+        }
+      Scope:
+        ComplianceResourceTypes:
+          - AWS::EC2::Instance
+          - AWS::RDS::DBInstance
+
+Outputs:
+  ProductionOUId:
+    Description: Production OU ID
+    Value: !GetAtt ProductionOU.Id
+    Export:
+      Name: !Sub '${AWS::StackName}-ProductionOUId'
+
+  StagingOUId:
+    Description: Staging OU ID
+    Value: !GetAtt StagingOU.Id
+    Export:
+      Name: !Sub '${AWS::StackName}-StagingOUId'
+
+  DevelopmentOUId:
+    Description: Development OU ID
+    Value: !GetAtt DevelopmentOU.Id
+    Export:
+      Name: !Sub '${AWS::StackName}-DevelopmentOUId'
+
+  SecurityOUId:
+    Description: Security OU ID
+    Value: !GetAtt SecurityOU.Id
+    Export:
+      Name: !Sub '${AWS::StackName}-SecurityOUId'
+
+  CloudTrailBucketName:
+    Description: CloudTrail S3 Bucket
+    Value: !Ref CloudTrailBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-CloudTrailBucket'
+
+  ConfigBucketName:
+    Description: Config S3 Bucket
+    Value: !Ref ConfigBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-ConfigBucket'
+
+  ConfigRecorderId:
+    Description: Config Recorder ID
+    Value: !Ref ConfigRecorder
+    Export:
+      Name: !Sub '${AWS::StackName}-ConfigRecorder'
